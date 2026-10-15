@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Fraud Pipeline Control Centre</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500&family=Roboto+Mono&display=swap">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,0..1,0&display=block">
+  <link rel="stylesheet" href="css/material.css">
+  <link rel="stylesheet" href="css/components.css">
+  <link rel="stylesheet" href="css/charts.css">
+</head>
+<body>
+  <div class="shell">
+    <header class="topbar">
+      <div class="brand">
+        <div class="logo"><span class="icon">credit_card</span></div>
+        <div>
+          <div class="brand-title">Fraud Pipeline Control Centre</div>
+          <div class="brand-sub">ITRI613 &middot; Event Hubs &rarr; Stream Analytics &rarr; Cosmos DB &rarr; Power BI</div>
+        </div>
+      </div>
+      <div class="spacer"></div>
+      <div class="sim-controls" id="sim-controls"></div>
+      <button class="icon-btn" id="theme-btn" title="Toggle light / dark theme" aria-label="Toggle theme"><span class="icon">dark_mode</span></button>
+    </header>
+    <nav class="rail" id="rail" aria-label="Main navigation"></nav>
+    <main id="main" tabindex="-1"></main>
+  </div>
+  <script type="module" src="js/main.js"></script>
+</body>
+</html>

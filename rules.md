@@ -1,6 +1,3 @@
-Your current rules are structurally sound, but they are tightly coupled to Haskell concepts (pure vs IO typing, explicit type signatures, etc.). Python does not enforce purity at the language level, so the rules need to be reframed around *conventions* rather than *guarantees*. Below is a precise Python-adapted version that preserves your architecture and intent.
-
----
 
 # Python Coding Rules
 
@@ -20,6 +17,8 @@ Your current rules are structurally sound, but they are tightly coupled to Haske
 
   * Male name: `Colile`
   * Place name: `Johannesburg`
+  * South African Currency 
+  * 
 
 ---
 

@@ -1,0 +1,1 @@
+# storage package : SQLite persistence (sessions, raw events, preferences, run logs).

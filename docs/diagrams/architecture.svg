@@ -1,0 +1,96 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="810" viewBox="0 0 1200 810">
+<defs><marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#222"/></marker></defs>
+<rect width="1200" height="810" fill="#ffffff"/>
+<text x="24" y="70" font-size="11" font-weight="bold" fill="#666" letter-spacing="1" font-family="Arial, Helvetica, sans-serif">SOURCE</text>
+<rect x="150" y="30" width="230" height="78" rx="4" fill="#ffffff" stroke="#222" stroke-width="1.3"/>
+<text x="370" y="44" font-size="9" text-anchor="end" fill="#666" font-family="Arial, Helvetica, sans-serif">«component»</text>
+<text x="265.0" y="60" font-size="13" font-weight="bold" text-anchor="middle" font-family="Arial, Helvetica, sans-serif">Event simulator</text>
+<text x="265.0" y="77" font-size="10.5" fill="#555" text-anchor="middle" font-family="Arial, Helvetica, sans-serif">producer.py · 10 events/s, 5x bursts</text>
+<text x="265.0" y="91" font-size="10.5" fill="#555" text-anchor="middle" font-family="Arial, Helvetica, sans-serif">duplicates · late · malformed</text>
+<rect x="670" y="30" width="230" height="78" rx="4" fill="#ffffff" stroke="#222" stroke-width="1.3"/>
+<text x="890" y="44" font-size="9" text-anchor="end" fill="#666" font-family="Arial, Helvetica, sans-serif">«component»</text>
+<text x="785.0" y="60" font-size="13" font-weight="bold" text-anchor="middle" font-family="Arial, Helvetica, sans-serif">card_metadata.json</text>
+<text x="785.0" y="77" font-size="10.5" fill="#555" text-anchor="middle" font-family="Arial, Helvetica, sans-serif">5 000 cards · tier · credit limit</text>
+<text x="24" y="190" font-size="11" font-weight="bold" fill="#666" letter-spacing="1" font-family="Arial, Helvetica, sans-serif">INGESTION</text>
+<rect x="150" y="150" width="230" height="78" rx="4" fill="#eef2fb" stroke="#222" stroke-width="1.3"/>
+<text x="370" y="164" font-size="9" text-anchor="end" fill="#666" font-family="Arial, Helvetica, sans-serif">«component»</text>
+<text x="265.0" y="180" font-size="13" font-weight="bold" text-anchor="middle" font-family="Arial, Helvetica, sans-serif">Azure Event Hubs</text>
+<text x="265.0" y="197" font-size="10.5" fill="#555" text-anchor="middle" font-family="Arial, Helvetica, sans-serif">hub transactions · 4 partitions</text>
+<text x="265.0" y="211" font-size="10.5" fill="#555" text-anchor="middle" font-family="Arial, Helvetica, sans-serif">partition key card_id</text>
+<rect x="670" y="150" width="230" height="78" rx="4" fill="#ffffff" stroke="#222" stroke-width="1.3"/>
+<text x="890" y="164" font-size="9" text-anchor="end" fill="#666" font-family="Arial, Helvetica, sans-serif">«component»</text>
+<text x="785.0" y="180" font-size="13" font-weight="bold" text-anchor="middle" font-family="Arial, Helvetica, sans-serif">Azure Blob Storage</text>
+<text x="785.0" y="197" font-size="10.5" fill="#555" text-anchor="middle" font-family="Arial, Helvetica, sans-serif">container reference-data</text>
+<line x1="265.0" y1="108" x2="265.0" y2="148" stroke="#222" stroke-width="1.4" marker-end="url(#arrow)"/>
+<text x="273.0" y="128" font-size="10" fill="#333" font-family="Arial, Helvetica, sans-serif">AMQP</text>
+<line x1="785.0" y1="108" x2="785.0" y2="148" stroke="#222" stroke-width="1.4" marker-end="url(#arrow)"/>
+<text x="793.0" y="128" font-size="10" fill="#333" font-family="Arial, Helvetica, sans-serif">upload</text>
+<text x="24" y="330" font-size="11" font-weight="bold" fill="#666" letter-spacing="1" font-family="Arial, Helvetica, sans-serif">PROCESSING</text>
+<rect x="138" y="268" width="1022" height="128" rx="6" fill="none" stroke="#444" stroke-dasharray="6 4" stroke-width="1.2"/>
+<text x="148" y="284" font-size="11" font-weight="bold" fill="#333" font-family="Arial, Helvetica, sans-serif">Azure Stream Analytics · fraud-pipeline-asa · TIMESTAMP BY event_time · late 2 min, out-of-order 30 s</text>
+<rect x="150" y="296" width="230" height="86" rx="4" fill="#ffffff" stroke="#222" stroke-width="1.3"/>
+<text x="370" y="310" font-size="9" text-anchor="end" fill="#666" font-family="Arial, Helvetica, sans-serif">«component»</text>
+<text x="265.0" y="326" font-size="13" font-weight="bold" text-anchor="middle" font-family="Arial, Helvetica, sans-serif">Q1 Dead-letter filter</text>
+<text x="265.0" y="343" font-size="10.5" fill="#555" text-anchor="middle" font-family="Arial, Helvetica, sans-serif">missing id, card or category</text>
+<text x="265.0" y="357" font-size="10.5" fill="#555" text-anchor="middle" font-family="Arial, Helvetica, sans-serif">or amount ≤ 0</text>
+<rect x="410" y="296" width="230" height="86" rx="4" fill="#ffffff" stroke="#222" stroke-width="1.3"/>
+<text x="630" y="310" font-size="9" text-anchor="end" fill="#666" font-family="Arial, Helvetica, sans-serif">«component»</text>
+<text x="525.0" y="326" font-size="13" font-weight="bold" text-anchor="middle" font-family="Arial, Helvetica, sans-serif">Q2-Q3 Windows</text>
+<text x="525.0" y="343" font-size="10.5" fill="#555" text-anchor="middle" font-family="Arial, Helvetica, sans-serif">tumbling 1 min per card</text>
+<text x="525.0" y="357" font-size="10.5" fill="#555" text-anchor="middle" font-family="Arial, Helvetica, sans-serif">hopping 5 min per category</text>
+<rect x="670" y="296" width="230" height="86" rx="4" fill="#ffffff" stroke="#222" stroke-width="1.3"/>
+<text x="890" y="310" font-size="9" text-anchor="end" fill="#666" font-family="Arial, Helvetica, sans-serif">«component»</text>
+<text x="785.0" y="326" font-size="13" font-weight="bold" text-anchor="middle" font-family="Arial, Helvetica, sans-serif">Q6 Reference join</text>
+<text x="785.0" y="343" font-size="10.5" fill="#555" text-anchor="middle" font-family="Arial, Helvetica, sans-serif">card tier, credit limit</text>
+<text x="785.0" y="357" font-size="10.5" fill="#555" text-anchor="middle" font-family="Arial, Helvetica, sans-serif">credit_flag NEAR_LIMIT</text>
+<rect x="930" y="296" width="230" height="86" rx="4" fill="#eef2fb" stroke="#222" stroke-width="1.3"/>
+<text x="1150" y="310" font-size="9" text-anchor="end" fill="#666" font-family="Arial, Helvetica, sans-serif">«component»</text>
+<text x="1045.0" y="326" font-size="13" font-weight="bold" text-anchor="middle" font-family="Arial, Helvetica, sans-serif">Q4-Q5 Fraud rules</text>
+<text x="1045.0" y="343" font-size="10.5" fill="#555" text-anchor="middle" font-family="Arial, Helvetica, sans-serif">velocity: sliding 5 min</text>
+<text x="1045.0" y="357" font-size="10.5" fill="#555" text-anchor="middle" font-family="Arial, Helvetica, sans-serif">amount &gt; 3x category average</text>
+<line x1="265.0" y1="228" x2="265.0" y2="266" stroke="#222" stroke-width="1.4" marker-end="url(#arrow)"/>
+<text x="273.0" y="248" font-size="10" fill="#333" font-family="Arial, Helvetica, sans-serif">consumer group stream-analytics</text>
+<line x1="785.0" y1="228" x2="785.0" y2="294" stroke="#222" stroke-width="1.4" marker-end="url(#arrow)" stroke-dasharray="5 4"/>
+<text x="793.0" y="248" font-size="10" fill="#333" font-family="Arial, Helvetica, sans-serif">reference input</text>
+<text x="24" y="490" font-size="11" font-weight="bold" fill="#666" letter-spacing="1" font-family="Arial, Helvetica, sans-serif">STORAGE</text>
+<rect x="138" y="430" width="1022" height="130" rx="6" fill="none" stroke="#444" stroke-dasharray="6 4" stroke-width="1.2"/>
+<text x="148" y="552" font-size="11" font-weight="bold" fill="#333" font-family="Arial, Helvetica, sans-serif">Azure Cosmos DB (NoSQL) · fraud_pipeline</text>
+<path d="M150,452 v70 a115.0,8 0 0 0 230,0 v-70" fill="#ffffff" stroke="#222" stroke-width="1.3"/>
+<ellipse cx="265.0" cy="452" rx="115.0" ry="8" fill="#ffffff" stroke="#222" stroke-width="1.3"/>
+<text x="265.0" y="484" font-size="13" font-weight="bold" text-anchor="middle" font-family="Arial, Helvetica, sans-serif">dead_letter</text>
+<text x="265.0" y="501" font-size="10.5" fill="#555" text-anchor="middle" font-family="Arial, Helvetica, sans-serif">key /ingestion_date · no TTL</text>
+<text x="265.0" y="515" font-size="10.5" fill="#555" text-anchor="middle" font-family="Arial, Helvetica, sans-serif">400 RU/s</text>
+<path d="M410,452 v70 a245.0,8 0 0 0 490,0 v-70" fill="#ffffff" stroke="#222" stroke-width="1.3"/>
+<ellipse cx="655.0" cy="452" rx="245.0" ry="8" fill="#ffffff" stroke="#222" stroke-width="1.3"/>
+<text x="655.0" y="484" font-size="13" font-weight="bold" text-anchor="middle" font-family="Arial, Helvetica, sans-serif">aggregates</text>
+<text x="655.0" y="501" font-size="10.5" fill="#555" text-anchor="middle" font-family="Arial, Helvetica, sans-serif">key /card_id · TTL 7 days · 400 RU/s</text>
+<path d="M930,452 v70 a115.0,8 0 0 0 230,0 v-70" fill="#ffffff" stroke="#222" stroke-width="1.3"/>
+<ellipse cx="1045.0" cy="452" rx="115.0" ry="8" fill="#ffffff" stroke="#222" stroke-width="1.3"/>
+<text x="1045.0" y="484" font-size="13" font-weight="bold" text-anchor="middle" font-family="Arial, Helvetica, sans-serif">fraud_alerts</text>
+<text x="1045.0" y="501" font-size="10.5" fill="#555" text-anchor="middle" font-family="Arial, Helvetica, sans-serif">key /card_id · TTL 30 days</text>
+<text x="1045.0" y="515" font-size="10.5" fill="#555" text-anchor="middle" font-family="Arial, Helvetica, sans-serif">400 RU/s</text>
+<line x1="265.0" y1="382" x2="265.0" y2="442" stroke="#222" stroke-width="1.4" marker-end="url(#arrow)"/>
+<line x1="525.0" y1="382" x2="525.0" y2="442" stroke="#222" stroke-width="1.4" marker-end="url(#arrow)"/>
+<line x1="785.0" y1="382" x2="785.0" y2="442" stroke="#222" stroke-width="1.4" marker-end="url(#arrow)"/>
+<line x1="1045.0" y1="382" x2="1045.0" y2="442" stroke="#222" stroke-width="1.4" marker-end="url(#arrow)"/>
+<text x="24" y="638" font-size="11" font-weight="bold" fill="#666" letter-spacing="1" font-family="Arial, Helvetica, sans-serif">REPORTING</text>
+<rect x="410" y="598" width="490" height="78" rx="4" fill="#ffffff" stroke="#222" stroke-width="1.3"/>
+<text x="890" y="612" font-size="9" text-anchor="end" fill="#666" font-family="Arial, Helvetica, sans-serif">«component»</text>
+<text x="655.0" y="628" font-size="13" font-weight="bold" text-anchor="middle" font-family="Arial, Helvetica, sans-serif">Power BI report</text>
+<text x="655.0" y="645" font-size="10.5" fill="#555" text-anchor="middle" font-family="Arial, Helvetica, sans-serif">live operations · fraud trends</text>
+<text x="655.0" y="659" font-size="10.5" fill="#555" text-anchor="middle" font-family="Arial, Helvetica, sans-serif">pipeline health · card drill-through</text>
+<rect x="930" y="598" width="230" height="78" rx="4" fill="#ffffff" stroke="#222" stroke-width="1.3"/>
+<text x="1150" y="612" font-size="9" text-anchor="end" fill="#666" font-family="Arial, Helvetica, sans-serif">«component»</text>
+<text x="1045.0" y="628" font-size="13" font-weight="bold" text-anchor="middle" font-family="Arial, Helvetica, sans-serif">Fraud analyst</text>
+<text x="1045.0" y="645" font-size="10.5" fill="#555" text-anchor="middle" font-family="Arial, Helvetica, sans-serif">«actor» triages red-flagged cards</text>
+<line x1="655.0" y1="560" x2="655.0" y2="596" stroke="#222" stroke-width="1.4" marker-end="url(#arrow)"/>
+<text x="663.0" y="580" font-size="10" fill="#333" font-family="Arial, Helvetica, sans-serif">Azure Cosmos DB connector</text>
+<line x1="900" y1="637" x2="928" y2="637" stroke="#222" stroke-width="1.4" marker-end="url(#arrow)"/>
+<text x="915.0" y="631" font-size="10" text-anchor="middle" fill="#333" font-family="Arial, Helvetica, sans-serif">alerts</text>
+<text x="24" y="734" font-size="11" font-weight="bold" fill="#666" letter-spacing="1" font-family="Arial, Helvetica, sans-serif">OPERATIONS</text>
+<rect x="138" y="700" width="1022" height="62" rx="6" fill="#f4f4f4" stroke="#999"/>
+<text x="150" y="720" font-size="11" font-weight="bold" fill="#333" font-family="Arial, Helvetica, sans-serif">Observability and cost control (applies to every component above)</text>
+<text x="150" y="742" font-size="10.5" fill="#444" font-family="Arial, Helvetica, sans-serif">Azure Monitor: Event Hubs throughput, ASA watermark delay   ·   Budget alerts at $20 / $50 / $80   ·   Control Centre UI: local ASA mirror, producer runner, live Cosmos reader</text>
+<text x="24" y="784" font-size="11.5" font-style="italic" fill="#222" font-family="Arial, Helvetica, sans-serif">Figure 1: Card transactions flow from the simulator through Event Hubs, partitioned by card_id, into one Stream Analytics job. Query 1 routes malformed events to dead_letter;</text>
+<text x="24" y="800" font-size="11.5" font-style="italic" fill="#222" font-family="Arial, Helvetica, sans-serif">the other five queries write windows, enriched transactions and fraud alerts to Cosmos DB, which the Power BI report reads.</text>
+</svg>

@@ -7,6 +7,7 @@ Sends realistic transaction events to Azure Event Hubs, simulating:
   - Duplicate events (2% re-send with same transaction_id)
   - Out-of-order events (5% arrive with event_time 30–120s in the past)
   - Late-arriving events (1% arrive with event_time >5 min in the past)
+  - Malformed events (1% have one broken field, to exercise the dead-letter path)
   - Log-normal amount distribution (mean ~R500, σ ~R200)
 
 Usage:
@@ -15,6 +16,7 @@ Usage:
     python producer.py               # run continuously (Ctrl+C to stop)
     python producer.py --burst       # immediately trigger a burst
     python producer.py --duration 60 # run for 60 seconds then exit
+    python producer.py --malformed 0 # send no malformed events
 """
 
 import argparse
@@ -26,6 +28,7 @@ import random
 import time
 import uuid
 from datetime import datetime, timezone, timedelta
+from pathlib import Path
 from dotenv import load_dotenv
 
 from azure.eventhub import EventHubProducerClient, EventData
@@ -45,11 +48,14 @@ log = logging.getLogger(__name__)
 CONNECTION_STRING = os.environ["EVENTHUB_CONNECTION_STRING"]
 EVENTHUB_NAME = os.environ.get("EVENTHUB_NAME", "transactions")
 
-# Card and merchant pools (fixed so velocity patterns are detectable)
-NUM_CARDS = 50
+# Card pool = every card in the reference data (5 000), so each event joins in
+# ASA query 6 and per-card traffic stays realistic enough for the velocity rule
+# (see docs/decisions/velocity_rule.md). Merchant pool is fixed.
+REFERENCE_PATH = Path(__file__).resolve().parents[1] / "reference_data" / "card_metadata.json"
+CARDS = [row["card_id"] for row in json.loads(REFERENCE_PATH.read_text(encoding="utf-8"))]
+NUM_CARDS = len(CARDS)
 NUM_MERCHANTS = 20
 
-CARDS = [f"CARD-{i:04d}" for i in range(1, NUM_CARDS + 1)]
 MERCHANTS = [f"MERCH-{i:03d}" for i in range(1, NUM_MERCHANTS + 1)]
 
 # Throughput
@@ -62,6 +68,8 @@ BURST_INTERVAL_SEC = 300    # burst every ~5 min
 DUPLICATE_PROB = 0.02       # 2% duplicates
 OUT_OF_ORDER_PROB = 0.05    # 5% out-of-order (30–120s in the past)
 LATE_ARRIVAL_PROB = 0.01    # 1% late arrivals (>5 min in the past)
+MALFORMED_PROB = 0.01       # 1% malformed (routed to dead_letter by ASA query 1)
+MALFORMED_FIELDS = ["transaction_id", "card_id", "amount", "merchant_category"]
 
 # Amount distribution: log-normal so most are small, rare large ones exist
 # Target: mean ~R500, std ~R200 => underlying normal: mu=6.19, sigma=0.38
@@ -144,9 +152,17 @@ def build_event(force_duplicate: str | None = None) -> TransactionEvent:
     )
 
 
+def corrupt_body(body: dict) -> str:
+    """Break one field so ASA's dead-letter filter catches the event. Returns the field name."""
+    field = random.choice(MALFORMED_FIELDS)
+    body[field] = -abs(body["amount"]) if field == "amount" else None
+    return field
+
+
 # ── Sending ──────────────────────────────────────────────────────────────────
 
-def send_batch(client: EventHubProducerClient, events: list[TransactionEvent]) -> None:
+def send_batch(client: EventHubProducerClient, events: list[TransactionEvent],
+               malformed_prob: float = MALFORMED_PROB) -> None:
     """Send a list of events, each partitioned by card_id."""
     # Group by card_id so we can send with the correct partition key
     by_card: dict[str, list[TransactionEvent]] = {}
@@ -156,14 +172,18 @@ def send_batch(client: EventHubProducerClient, events: list[TransactionEvent]) -
     for card_id, card_events in by_card.items():
         batch = client.create_batch(partition_key=card_id)
         for ev in card_events:
-            body = json.dumps(ev.to_event_hub_body()).encode("utf-8")
+            payload = ev.to_event_hub_body()
+            if random.random() < malformed_prob:
+                corrupt_body(payload)
+            body = json.dumps(payload).encode("utf-8")
             batch.add(EventData(body))
         client.send_batch(batch)
 
 
 # ── Main loop ─────────────────────────────────────────────────────────────────
 
-def run(burst_immediately: bool = False, duration_sec: int | None = None) -> None:
+def run(burst_immediately: bool = False, duration_sec: int | None = None,
+        malformed_prob: float = MALFORMED_PROB) -> None:
     log.info("Connecting to Event Hubs: %s / %s", CONNECTION_STRING.split(";")[0], EVENTHUB_NAME)
 
     client = EventHubProducerClient.from_connection_string(
@@ -175,7 +195,8 @@ def run(burst_immediately: bool = False, duration_sec: int | None = None) -> Non
     sent_total = 0
     burst_active = False
     burst_start = 0.0
-    last_burst_trigger = -BURST_INTERVAL_SEC if not burst_immediately else 0.0
+    # First scheduled burst comes after one full interval; --burst starts one now.
+    last_burst_trigger = start_time - BURST_INTERVAL_SEC if burst_immediately else start_time
     recent_tx_ids: list[str] = []  # pool for duplicate re-sends
 
     stats_interval = 10  # log stats every N seconds
@@ -216,7 +237,7 @@ def run(burst_immediately: bool = False, duration_sec: int | None = None) -> Non
                     if len(recent_tx_ids) > 200:
                         recent_tx_ids.pop(0)
 
-                send_batch(client, [ev])
+                send_batch(client, [ev], malformed_prob)
                 sent_total += 1
                 sent_since_stats += 1
 
@@ -245,5 +266,7 @@ if __name__ == "__main__":
     parser.add_argument("--burst", action="store_true", help="Trigger burst immediately on start")
     parser.add_argument("--duration", type=int, default=None, metavar="SECONDS",
                         help="Run for N seconds then exit")
+    parser.add_argument("--malformed", type=float, default=MALFORMED_PROB, metavar="P",
+                        help="Probability of a malformed event (default 0.01, 0 to disable)")
     args = parser.parse_args()
-    run(burst_immediately=args.burst, duration_sec=args.duration)
+    run(burst_immediately=args.burst, duration_sec=args.duration, malformed_prob=args.malformed)
