@@ -1,5 +1,5 @@
 // transform.js : Step 3 - Azure Stream Analytics. Time policy, the six query steps, live counts.
-import { h, icon, clear, num, time, stat, card, pageHead, tabs, code, callout, snackbar, chip } from '../ui.js';
+import { h, icon, clear, num, time, stat, card, pageHead, tabs, code, callout, snackbar, chip, dialog } from '../ui.js';
 import { get, post } from '../api.js';
 import { pref, setPref } from '../prefs.js';
 import { renderExplorer } from './threshold.js';
@@ -31,7 +31,27 @@ function policy(p) {
       field('velocity_threshold', 'Velocity: alert when count >', 1, 150, 1, ''),
       field('velocity_window_s', 'Velocity window', 30, 600, 30, ' s'),
       field('amount_multiplier', 'High amount: x rolling avg', 1.5, 10, 0.5, 'x')),
-    h('button', { class: 'btn', onclick: async () => { await post('/api/transform/policy', values); snackbar('Re-processing every event with the new settings'); refs.refresh(true); } }, icon('replay'), 'Apply and re-process'));
+    [h('button', { class: 'btn tonal', onclick: writeFiles, title: 'Copy the applied settings into asa/query.sql and infra/streamanalytics.bicep' }, icon('edit_document'), 'Write to project files'),
+     h('button', { class: 'btn', onclick: async () => { await post('/api/transform/policy', values); snackbar('Re-processing every event with the new settings'); refs.refresh(true); } }, icon('replay'), 'Apply and re-process')]);
+}
+
+// Shows exactly which lines of asa/query.sql and the Bicep template the applied settings change.
+async function writeFiles() {
+  const d = await get('/api/transform/files-preview');
+  const changed = d.files.filter((f) => f.changed);
+  const view = (diff) => h('pre', { class: 'code diff' }, diff.split('\n').map((l) =>
+    h('span', { class: l.startsWith('+') && !l.startsWith('+++') ? 'add' : l.startsWith('-') && !l.startsWith('---') ? 'del' : '' }, l + '\n')));
+  const dlg = dialog('Write settings to project files?', h('div', { class: 'grid' },
+    h('p', { class: 'muted' }, 'Uses the applied settings (press "Apply and re-process" first if you moved a slider). Only the lines shown change.'),
+    changed.length ? changed.map((f) => h('div', {}, h('b', {}, f.file), view(f.diff)))
+      : callout('check_circle', 'asa/query.sql and infra/streamanalytics.bicep already match these settings - nothing to write.')),
+    changed.length ? [h('button', { class: 'btn', onclick: async () => {
+      const r = await post('/api/transform/files-apply');
+      dlg.remove();
+      snackbar('Updated ' + r.written.join(' and ') + ' - redeploy the Stream Analytics job to use them');
+      sql = (await get('/api/file', { key: 'asa_query' })).content.replace(/\r/g, '');
+      render(false);
+    } }, icon('save'), 'Write files')] : []);
 }
 
 function insight(d) {

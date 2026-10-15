@@ -3,6 +3,7 @@
 # to install the simulator requirements from the UI. Every run and every
 # output line is stored in SQLite, so the log is still there after a restart.
 
+import os
 import subprocess
 import sys
 import threading
@@ -36,18 +37,29 @@ class ProcessRunner:
 
     # Starts python with `args` in `cwd` unless something is already running.
     def start(self, label, args, cwd):
+        return self.start_cmd(label, [sys.executable, *args], cwd)
+
+    # Starts any command (python, powershell, az, chrome...) unless something is running.
+    def start_cmd(self, label, argv, cwd="."):
         if self.is_running():
             return False
-        command = "python " + " ".join(args)
+        shown = " ".join(("python" if a == sys.executable else a) for a in argv)
         with self.db.tx() as c:
-            self.run_id = repo.start_run(c, label, command)
+            self.run_id = repo.start_run(c, label, shown)
         self.lines.clear()
         self.label, self.count = label, 0
-        self._line("> " + command)
-        self.proc = subprocess.Popen(
-            [sys.executable, *args], cwd=str(ROOT / cwd), stdout=subprocess.PIPE,
-            stderr=subprocess.STDOUT, text=True, encoding="utf-8", errors="replace",
-            creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0))
+        self._line("> " + shown)
+        env = {**os.environ, "PYTHONUNBUFFERED": "1", "PYTHONIOENCODING": "utf-8"}
+        try:
+            self.proc = subprocess.Popen(
+                argv, cwd=str(ROOT / cwd), stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True,
+                encoding="utf-8", errors="replace", env=env, creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0))
+        except OSError as exc:
+            self._line("[could not start: %s]" % exc)
+            with self.db.tx() as c:
+                repo.end_run(c, self.run_id, -2)
+            self.proc = None
+            return True
         threading.Thread(target=self._pump, daemon=True).start()
         return True
 
@@ -74,7 +86,8 @@ class ProcessRunner:
 
 
 # Pure function: builds producer.py arguments from UI options.
-def producer_args(duration, burst, malformed=0.01):
+def producer_args(duration, burst, malformed=0.01, rate=10):
     args = ["producer.py", "--duration", str(max(5, min(int(duration), 3600))),
-            "--malformed", str(max(0.0, min(float(malformed), 0.5)))]
+            "--malformed", str(max(0.0, min(float(malformed), 0.5))),
+            "--rate", str(max(1, min(int(rate), 200)))]
     return args + ["--burst"] if burst else args

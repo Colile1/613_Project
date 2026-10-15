@@ -47,6 +47,19 @@ def get_file(key):
     return {"key": key, "path": path, "title": title, "lang": lang, "content": text}
 
 
+# Input wrapper: reads text exactly as stored (keeps Windows line endings).
+def read_exact(path):
+    with open(path, encoding="utf-8", newline="") as f:
+        return f.read()
+
+
+# Output logic: writes text exactly as given (no newline translation on Windows),
+# so files keep their own line endings when the UI edits them.
+def write_exact(path, text):
+    with open(path, "w", encoding="utf-8", newline="") as f:
+        f.write(text)
+
+
 # Pure function: counts done and open checkboxes in todo.md text.
 def todo_progress(text):
     return {"done": text.count("- [x]"), "open": text.count("- [ ]")}

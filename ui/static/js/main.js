@@ -13,6 +13,7 @@ import warehouse from './views/warehouse.js';
 import query from './views/query.js';
 import analytics from './views/analytics.js';
 import azure from './views/azure.js';
+import tools from './views/tools.js';
 import docs from './views/docs.js';
 import guide from './views/guide.js';
 import about from './views/about.js';
@@ -27,6 +28,7 @@ const NAV = [
   { key: 'analytics', label: 'Analytics', icon: 'monitoring', step: 5, view: analytics },
   'divider',
   { key: 'azure', label: 'Azure', icon: 'cloud', view: azure },
+  { key: 'tools', label: 'Tools', icon: 'build', view: tools },
   { key: 'docs', label: 'Project files', icon: 'folder_open', view: docs },
   { key: 'guide', label: 'User guide', icon: 'menu_book', view: guide },
   { key: 'about', label: 'About', icon: 'info', view: about },

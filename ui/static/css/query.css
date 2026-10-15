@@ -82,3 +82,9 @@ td.null { color: var(--muted); font-style: italic; }
 .join-chip { flex-wrap: wrap; }
 .small-seg button { height: 30px; padding: 0 10px; font-size: 12px; }
 .editor-tools { display: flex; gap: 8px; justify-content: flex-end; margin-bottom: 8px; flex-wrap: wrap; }
+/* Tools / Azure / Transform extras */
+.plain-ta { width: 100%; font: 13px/1.5 var(--font); padding: 8px 12px; border-radius: 8px; border: 1px solid var(--outline); background: var(--surface-1); color: var(--on-surface); resize: vertical; }
+.plain-ta:focus { outline: 2px solid var(--primary); outline-offset: -1px; }
+pre.diff .add { color: var(--good); background: rgba(12,163,12,.08); display: block; }
+pre.diff .del { color: var(--critical); background: rgba(208,59,59,.08); display: block; }
+pre.diff span { display: block; white-space: pre; }

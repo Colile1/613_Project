@@ -63,7 +63,7 @@ td.num, th.num { text-align: right; }
 .field { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
 .field label { font-size: 12px; color: var(--on-surface-variant); display: flex; justify-content: space-between; gap: 8px; }
 .field label b { color: var(--on-surface); font-weight: 500; font-variant-numeric: tabular-nums; }
-input[type=text], input[type=number], input[type=search], select {
+input[type=text], input[type=number], input[type=search], input[type=password], input[type=date], select {
   height: 40px; border-radius: 8px; border: 1px solid var(--outline); background: var(--surface-1);
   color: var(--on-surface); padding: 0 12px; font: 14px var(--font); min-width: 0; }
 input:focus, select:focus { outline: 2px solid var(--primary); outline-offset: -1px; }

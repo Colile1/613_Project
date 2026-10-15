@@ -7,7 +7,7 @@ from http.server import BaseHTTPRequestHandler
 from pathlib import Path
 from urllib.parse import urlparse, parse_qsl
 
-from ui.server import api_read, api_write, api_sessions, api_query, api_reference
+from ui.server import api_read, api_write, api_sessions, api_query, api_reference, api_tools
 
 STATIC = Path(__file__).resolve().parents[1] / "static"
 DIAGRAMS = {"/diagram/architecture.svg": Path(__file__).resolve().parents[2] / "docs" / "diagrams" / "architecture.svg"}
@@ -22,6 +22,9 @@ GET_ROUTES = {
     "/api/sessions/export": api_sessions.export_session,
     "/api/sql/schema": api_query.schema, "/api/sql/profile": api_query.profile,
     "/api/sql/export": api_query.export, "/api/sql/saved": api_query.saved,
+    "/api/tools": api_tools.info, "/api/tools/todo": api_tools.todo, "/api/tools/log": api_tools.log,
+    "/api/azure/settings": api_tools.settings, "/api/azure/cost-log": api_tools.cost_entries,
+    "/api/transform/files-preview": api_tools.files_preview,
 }
 POST_ROUTES = {
     "/api/sim/start": api_write.sim_start, "/api/sim/stop": api_write.sim_stop, "/api/sim/speed": api_write.sim_speed,
@@ -35,6 +38,14 @@ POST_ROUTES = {
     "/api/sessions/delete": api_sessions.delete_session, "/api/sessions/backup": api_sessions.backup,
     "/api/sql/query": api_query.run, "/api/sql/save": api_query.save, "/api/sql/delete": api_query.delete,
     "/api/sql/view": api_query.save_view, "/api/sql/view/delete": api_query.delete_view,
+    "/api/tools/study": api_tools.run_study, "/api/tools/cards": api_tools.regenerate_cards, "/api/tools/reload-cards": api_tools.reload_cards,
+    "/api/tools/diagram": api_tools.diagram, "/api/tools/screenshots": api_tools.screenshots,
+    "/api/tools/todo/set": api_tools.todo_set, "/api/tools/todo/add": api_tools.todo_add, "/api/tools/log/add": api_tools.log_add,
+    "/api/tools/restore": api_tools.restore, "/api/tools/import": api_tools.import_session,
+    "/api/azure/settings": api_tools.save_settings, "/api/azure/login": api_tools.login, "/api/azure/deploy": api_tools.deploy,
+    "/api/azure/fetch-connection": api_tools.fetch_connection, "/api/azure/install-package": api_tools.install_package,
+    "/api/azure/cost-log/add": api_tools.cost_add, "/api/azure/cost-log/delete": api_tools.cost_delete,
+    "/api/azure/cost-log/write-doc": api_tools.cost_write_doc, "/api/transform/files-apply": api_tools.files_apply,
 }
 
 

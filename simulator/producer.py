@@ -17,6 +17,7 @@ Usage:
     python producer.py --burst       # immediately trigger a burst
     python producer.py --duration 60 # run for 60 seconds then exit
     python producer.py --malformed 0 # send no malformed events
+    python producer.py --rate 20     # baseline 20 events/sec (bursts are 5x)
 """
 
 import argparse
@@ -183,7 +184,7 @@ def send_batch(client: EventHubProducerClient, events: list[TransactionEvent],
 # ── Main loop ─────────────────────────────────────────────────────────────────
 
 def run(burst_immediately: bool = False, duration_sec: int | None = None,
-        malformed_prob: float = MALFORMED_PROB) -> None:
+        malformed_prob: float = MALFORMED_PROB, baseline_rate: int = BASELINE_RATE) -> None:
     log.info("Connecting to Event Hubs: %s / %s", CONNECTION_STRING.split(";")[0], EVENTHUB_NAME)
 
     client = EventHubProducerClient.from_connection_string(
@@ -205,7 +206,7 @@ def run(burst_immediately: bool = False, duration_sec: int | None = None,
 
     try:
         with client:
-            log.info("Simulator running. Baseline rate: %d events/sec. Ctrl+C to stop.", BASELINE_RATE)
+            log.info("Simulator running. Baseline rate: %d events/sec. Ctrl+C to stop.", baseline_rate)
             while True:
                 now_mono = time.monotonic()
 
@@ -225,7 +226,7 @@ def run(burst_immediately: bool = False, duration_sec: int | None = None,
                     burst_active = False
                     log.info("BURST ended, returning to baseline")
 
-                rate = BASELINE_RATE * (BURST_MULTIPLIER if burst_active else 1)
+                rate = baseline_rate * (BURST_MULTIPLIER if burst_active else 1)
 
                 # Build one event per "tick"
                 r = random.random()
@@ -268,5 +269,7 @@ if __name__ == "__main__":
                         help="Run for N seconds then exit")
     parser.add_argument("--malformed", type=float, default=MALFORMED_PROB, metavar="P",
                         help="Probability of a malformed event (default 0.01, 0 to disable)")
+    parser.add_argument("--rate", type=int, default=BASELINE_RATE, metavar="N",
+                        help="Baseline events per second (default 10; bursts are 5x)")
     args = parser.parse_args()
-    run(burst_immediately=args.burst, duration_sec=args.duration, malformed_prob=args.malformed)
+    run(burst_immediately=args.burst, duration_sec=args.duration, malformed_prob=args.malformed, baseline_rate=args.rate)

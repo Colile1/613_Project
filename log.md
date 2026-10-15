@@ -185,3 +185,23 @@
 **Why:** Users needed to see and question the whole warehouse, not only fixed pages. The builder lets non-SQL users ask questions; SQL mode gives full power (joins with the card reference data, window functions); switching between them shows the SQL behind each question.
 
 **Impact:** Queries run in milliseconds and cannot change data (an SQLite authorizer allows only reads; 5-second limit). Tested in the browser: drag-and-drop produced the expected SQL, switching modes kept identical SQL, a JOIN was kept in SQL mode with an explanation, hand-written SQL (with its own aliases) reopened in the builder, and charts and exports worked.
+
+---
+
+## [2026-10-15] Query limitations turned into features
+
+**What was done:** Replaced the regex SQL reader with a tokenizer-based parser (`sqlparse.js`) and rewrote the generator (`sqlgen.js`) and builder. The builder now joins tables automatically when a column from another table is dropped (`joins.js`, using the Data model relationships), and supports calculated columns (CASE, functions, window functions), All (AND) / Any (OR) filters with in list, between, like and custom conditions, automatic or custom GROUP BY, HAVING, Distinct and Offset. The SQL editor (`editor.js`) has syntax highlighting, alias-aware autocomplete and a Format button. Any query can be saved as a view (`ui/storage/saved_views.py`); views are recreated in every warehouse copy and appear in the schema panel, so WITH, UNION and sub-queries in FROM can be used from the builder.
+
+**Why:** The first Query page only let the builder show single-table AND-only queries, and the editor was plain text. Users asked for these limits to become features.
+
+**Impact:** Any single SELECT now opens in the builder. Thirty varied queries were parsed, regenerated and executed: every query the builder accepts returned identical results, and the three that cannot be shown (WITH, UNION, FROM sub-query) are offered "Save as view". A browser test covered auto-join, calculated columns, OR filters, BETWEEN, HAVING, mode switching, autocomplete, formatting and the save-as-view path.
+
+---
+
+## [2026-10-15] UI options for everything else
+
+**What was done:** Added a **Tools** page (run the velocity and amount studies, regenerate the card reference data with any card count, rebuild the architecture diagram, capture screenshots of every page in light or dark theme, tick `todo.md` items and add `log.md` entries, back up, restore and import sessions). Extended the **Azure** page with Settings (a `simulator/.env` form that never shows secrets back, fetch the connection string with the Azure CLI, install packages), Deploy (sign in, deploy everything, start/stop the job, upload card data, delete all, each with a confirmation) and Cost (session cost log written to `docs/cost_tracking.md`), plus a rate option for `producer.py` (new `--rate` flag). Added **Transform > Write to project files**, which shows a diff and then writes the applied settings into `asa/query.sql` and `infra/streamanalytics.bicep`.
+
+**Why:** Every remaining step in the project required a terminal or editing a file by hand.
+
+**Impact:** The studies now pin their simulated start time, so re-runs give identical results. This changed the deployed amount rule's measured false-alert rate from 0.05% to 0.07% (detection unchanged at 97%); the decision record was corrected. File writers keep each file's line endings byte-for-byte (tested with LF and CRLF). Tested: diagram rebuild, a study, 17 screenshots, todo tick/untick, cost log, session import, backup restore on a temporary database, and the Azure buttons' "CLI not installed" path.

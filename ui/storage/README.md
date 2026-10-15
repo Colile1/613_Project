@@ -9,6 +9,8 @@ Keeps everything the control centre needs to continue after a restart or crash, 
 | `events` | The append-only raw event log of every session (`session_id`, `seq`, body JSON). This is the source of truth |
 | `prefs` | UI preferences shared by every browser tab: last page, tabs, filters, warehouse search, theme, active session |
 | `runs`, `run_lines` | Every `producer.py` / `pip install` run started from the Azure page and its full output |
+| `saved_queries` | Queries saved from the Query page (SQL plus builder layout and mode) |
+| `saved_views` | SQL views the user added to the warehouse (recreated in every rebuilt copy) |
 
 ## Design
 

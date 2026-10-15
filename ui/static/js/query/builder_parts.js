@@ -18,9 +18,14 @@ export function addMenu(label, groups, onPick, disabled = false) {
 export const removeBtn = (onClick) => h('button', { class: 'x', title: 'Remove', 'aria-label': 'Remove', onclick: onClick }, icon('close'));
 
 // Text box that updates the layout without re-rendering (keeps focus while typing).
+// Expression boxes (mono) grow with their text so long conditions stay readable.
 export function field(value, placeholder, onInput, opts = {}) {
-  return h('input', { type: 'text', value: value ?? '', placeholder, 'aria-label': opts.label || placeholder, spellcheck: 'false',
-    class: opts.mono ? 'mono' : null, style: { width: opts.width || '120px' }, oninput: (e) => onInput(e.target.value) });
+  const min = parseInt(opts.width || '120', 10);
+  const fit = (el) => { if (opts.mono) el.style.width = `min(100%, max(${min}px, calc(${Math.max(el.value.length, 4) + 2}ch + 16px)))`; };
+  const el = h('input', { type: 'text', value: value ?? '', placeholder, 'aria-label': opts.label || placeholder, spellcheck: 'false',
+    class: opts.mono ? 'mono' : null, style: { width: opts.width || '120px' }, oninput: (e) => { fit(e.target); onInput(e.target.value); } });
+  fit(el);
+  return el;
 }
 
 // All / Any switch for a list of conditions.

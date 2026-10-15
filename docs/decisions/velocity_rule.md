@@ -93,25 +93,26 @@ Adopt **Option 4**:
 
 This was decided in two steps on 2026-10-15. First, the baseline moved from the card to the category, as a rolling self-join. Then, after measuring the cost of that join, the category average was pre-aggregated. Both steps are in the evidence below.
 
-**Evidence** (`docs/decisions/amount_rule_results.md`, reproduce with `python -m ui.etl.amount_study`; injected fraud spikes, three seeds, 20 simulated minutes each at 10 events/s):
+**Evidence** (`docs/decisions/amount_rule_results.md`, reproduce with `python -m ui.etl.amount_study` or Tools › Studies; injected fraud spikes, three seeds, 20 simulated minutes each at 10 events/s, simulated clock fixed at 2026-01-01 00:00 UTC so re-runs are identical):
 
 | Cards | Baseline | Spikes caught | False alerts | Rows joined per payment |
 |---|---|---|---|---|
 | 50 | Card's own rolling average (original) | 237 of 242 (98%) | 0.09% | 123 |
 | 50 | Category rolling average, self-join | 239 of 242 (99%) | 0.06% | 870 |
-| 50 | **Category average, pre-aggregated (deployed)** | 237 of 242 (98%) | 0.07% | **1** |
+| 50 | **Category average, pre-aggregated (deployed)** | 237 of 242 (98%) | 0.12% | **1** |
 | 5 000 | Card's own rolling average (original) | **33 of 242 (14%)** | 0.07% | 2 |
 | 5 000 | Category rolling average, self-join | 234 of 242 (97%) | 0.05% | 876 |
-| 5 000 | **Category average, pre-aggregated (deployed)** | **234 of 242 (97%)** | **0.05%** | **1** |
+| 5 000 | **Category average, pre-aggregated (deployed)** | **234 of 242 (97%)** | **0.07%** | **1** |
 
 **Pros.**
 - Detection no longer depends on how often a single card is used (97% at 5 000 cards, 98% at 50).
 - Each category has a large, stable history (about 850 payments per 10 minutes at 10 events/s), so one payment cannot distort its own baseline.
+- False alerts stay rare: 0.07% of normal payments at 5 000 cards, the same rate as the per-card rule.
 - The cheapest join of all the options: one row per payment, against 876 for the rolling self-join and 123 for the original per-card rule with 50 cards. Query 5 no longer competes with the other queries for streaming units, so it does not slow down the dead-letter, window, velocity or enrichment outputs.
 
 **Cons and trade-offs.**
 - **Meaning changes.** An alert now means "unusual for this kind of purchase", not "unusual for this customer". A customer who always spends R5 000 on travel will alert if the travel average is R600. Query 6's `credit_flag` (NEAR_LIMIT) and the card tier help an analyst separate genuine high spenders from fraud.
-- **Slightly stale baseline.** The average comes from the last completed minute, so it excludes the current payment and up to 59 seconds of the most recent payments. With hundreds of payments per category in each window, this made no measurable difference to detection (97% either way at 5 000 cards).
+- **Slightly stale baseline.** The average comes from the last completed minute, so it excludes the current payment and up to 59 seconds of the most recent payments. With hundreds of payments per category in each window, detection is unchanged (97% either way at 5 000 cards); false alerts rise slightly (0.05% to 0.07%), the price of a join that is about 900 times cheaper.
 - **Cross-partition.** `CategoryAvg` groups by category across every `card_id` partition, so it cannot run per partition. At 1 SU the job is not partition-parallel anyway; it would matter only when scaling out.
 
 ## 7. Limitations and how to revisit

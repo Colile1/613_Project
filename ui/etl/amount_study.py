@@ -9,6 +9,7 @@
 import tempfile
 from collections import deque
 from datetime import timedelta
+from datetime import datetime, timezone
 from pathlib import Path
 
 from ui.etl import alerts, generator, transform
@@ -17,6 +18,7 @@ from ui.storage.db import Database
 
 OUT = Path(__file__).resolve().parents[2] / "docs" / "decisions" / "amount_rule_results.md"
 SEEDS = [11, 42, 99]
+START = datetime(2026, 1, 1, tzinfo=timezone.utc)
 ALL_CARDS = list(generator.CARDS)
 
 
@@ -51,6 +53,7 @@ def run(cards, seed, folder):
     try:
         s = PipelineSession(db)
         s.reset(seed)
+        s.clock = START   # fixed start: window boundaries line up the same way every run
         s.advance(1200)
         events, result = s.result()
         valid = [e for e in events if transform.is_valid(e)]

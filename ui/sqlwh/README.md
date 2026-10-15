@@ -11,4 +11,17 @@ Backs the **Query** page (drag-and-drop builder and SQL editor), the Warehouse *
 
 The copy is rebuilt from the session's stored events, so it can never change the saved data. Saved queries live in the main database (`ui/storage/saved_queries.py`).
 
-The visual builder and the SQL editor share one query: `ui/static/js/query/sqlgen.js` generates SQL from a builder layout and parses SQL back into a layout when it fits (one table, AND-ed filters, aggregates, sort, limit). Anything else (JOIN, OR, CASE, expressions) stays in SQL mode with an explanation.
+Saved views (`ui/storage/saved_views.py`) are recreated in every rebuilt copy, so any read-only SELECT - including WITH, UNION and sub-queries - becomes a table the builder can use.
+
+## Query page modules (`ui/static/js/query/`)
+
+| Module | Purpose |
+|---|---|
+| `sqlparse.js` | Tokenizer, SELECT parser (SQL to builder layout) and formatter. Anything it cannot place in a structured box becomes a calculated column or custom condition, so any single SELECT opens in the builder |
+| `sqlgen.js` | Builder layout to SQL: joins, aggregates, calculated columns, AND/OR filters, automatic or custom GROUP BY, HAVING, sort, LIMIT/OFFSET |
+| `joins.js` | Suggests the join condition when a column from another table is dropped (Data model relationships, then shared key columns) |
+| `builder.js`, `builder_parts.js` | The drag-and-drop builder and its zones |
+| `editor.js` | SQL editor: syntax highlighting, autocomplete (alias-aware), formatting |
+| `schema_panel.js`, `dnd.js`, `results.js` | Schema tree, drag-and-drop helpers, result table/chart/export |
+
+Tested by parsing 30 varied queries, regenerating them and executing both against the warehouse: every query the builder accepts returned identical results; WITH, UNION and FROM sub-queries are offered "Save as view".

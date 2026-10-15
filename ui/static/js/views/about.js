@@ -19,7 +19,7 @@ const NOTES = [
   ['--burst flag', 'A burst started on the first loop whether or not --burst was given.', 'Resolved: first burst after 5 minutes; --burst starts one immediately.'],
   ['Dead-letter path', 'producer.py never sent malformed events, so dead_letter stayed empty on Azure.', 'Resolved: producer.py sends 1% malformed events (--malformed P, 0 to disable).'],
   ['Velocity threshold', 'With 50 cards at 10 events/s a normal card made ~79 transactions per 5 minutes, so "> 5 in 5 min" fired on 98% of normal payments.', 'Decided: rule unchanged, card pool grown to 5 000 (0.14% noise, all simulated attacks caught). Record: docs/decisions/velocity_rule.md.'],
-  ['Amount rule with 5 000 cards', 'Query 5 compared a payment with the same card’s 10-minute average; with 5 000 cards that history is usually empty, so only 14% of injected spikes were caught.', 'Decided: compare with the merchant category’s 10-minute average, pre-aggregated once a minute (97% caught, 0.05% false alerts, 1 joined row per payment instead of ~876). Record: velocity_rule.md section 6.'],
+  ['Amount rule with 5 000 cards', 'Query 5 compared a payment with the same card’s 10-minute average; with 5 000 cards that history is usually empty, so only 14% of injected spikes were caught.', 'Decided: compare with the merchant category’s 10-minute average, pre-aggregated once a minute (97% caught, 0.07% false alerts, 1 joined row per payment instead of ~876). Record: velocity_rule.md section 6.'],
   ['Duplicates', 'Duplicate transaction_ids are kept by every query; counts and spend include them.', 'Documented: deduplication would need an extra step.'],
 ];
 

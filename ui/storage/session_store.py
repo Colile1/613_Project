@@ -4,6 +4,8 @@
 
 from ui.storage import repositories as repo
 from ui.storage import codec
+from ui.etl import generator
+from ui.etl.enrich import get_card_metadata
 
 ACTIVE_KEY = "_active_session"
 
@@ -61,6 +63,14 @@ class SessionStoreMixin:
             repo.rename_session(c, sid, name.strip() or "Untitled session")
         if sid == self.session_id:
             self.session_name = name.strip() or "Untitled session"
+
+    # Re-reads reference_data/card_metadata.json (after Tools > Reference data regenerated it).
+    def reload_reference(self):
+        with self.lock:
+            self.metadata = get_card_metadata()
+            self.tiers = {k: v["customer_tier"] for k, v in self.metadata.items()}
+            generator.CARDS[:] = list(self.metadata)
+            self.version += 1
 
     # Deletes a session; deleting the open one moves to another (or a new one).
     def delete_session(self, sid):

@@ -34,6 +34,8 @@ stored in `ui/data/control_centre.db` as they change, and restored on the next s
 | `integrations/` | Project file access, environment checks, producer runner, live Cosmos DB reader |
 | `storage/` | SQLite persistence: sessions, raw event log, UI preferences, run logs, saved queries (see `storage/README.md`) |
 | `sqlwh/` | The warehouse as a read-only SQL database for the Query page, Data model and exports (see `sqlwh/README.md`) |
+
+Everything that used to need a terminal or a text editor now has a button: **Azure** (producer with rate, `.env` settings, packages, sign-in, deploy/start/stop/delete, card upload, cost log), **Tools** (studies, card generator, diagram, screenshots, todo/log, backups/restore/import) and **Transform › Write to project files** (copies the applied settings into `asa/query.sql` and `infra/streamanalytics.bicep` after showing the diff). Long tasks run one at a time through `integrations/process_runner.py`; their output and history are saved.
 | `static/` | The single-page interface: `index.html`, `css/`, `js/` (one module per page in `js/views/`) |
 
 The server listens on 127.0.0.1 only. Only whitelisted project files can be read, and `simulator/.env` secrets never reach the browser.

@@ -5,10 +5,11 @@
 # ranges per tier. Seeded, so the file is identical on every run.
 #
 # Why 5 000 cards: see docs/decisions/velocity_rule.md.
-# Run from the project root:  python reference_data/generate_cards.py
+# Run from the project root:  python reference_data/generate_cards.py [count]   (default 5000)
 
 import json
 import random
+import sys
 from pathlib import Path
 
 PATH = Path(__file__).with_name("card_metadata.json")
@@ -49,10 +50,15 @@ def make_card(rng, number):
     }
 
 
-# Pure function: the original cards followed by generated ones up to CARD_COUNT.
-def build_cards(original):
+# Pure function: the original cards followed by generated ones up to `count`.
+def build_cards(original, count=CARD_COUNT):
     rng = random.Random(SEED)
-    return original[:ORIGINAL_COUNT] + [make_card(rng, n) for n in range(ORIGINAL_COUNT + 1, CARD_COUNT + 1)]
+    return original[:min(count, ORIGINAL_COUNT)] + [make_card(rng, n) for n in range(ORIGINAL_COUNT + 1, count + 1)]
+
+
+# Input wrapper: card count from the command line (50 - 50 000).
+def get_count():
+    return max(ORIGINAL_COUNT, min(int(sys.argv[1]), 50000)) if len(sys.argv) > 1 else CARD_COUNT
 
 
 # Input wrapper: reads the current file.
@@ -68,7 +74,7 @@ def write_cards(cards):
 
 
 def main():
-    write_cards(build_cards(get_original()))
+    write_cards(build_cards(get_original(), get_count()))
 
 
 if __name__ == "__main__":

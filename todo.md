@@ -105,7 +105,7 @@
 - [x] Resolve engineering notes: late-arrival tolerance aligned to 2 min, query 6 keeps ingestion_time (+ enqueued/processed time), null category excluded from queries 2-6, producer --burst fixed, producer sends 1% malformed events
 - [x] Gather evidence for the velocity threshold (Transform > Threshold explorer, simulated card-testing attacks)
 - [x] Choose the velocity rule: Option 4 - rule unchanged (> 5 in 5 min), card pool grown to 5 000 (docs/decisions/velocity_rule.md)
-- [x] Query 5 (amount anomaly) now compares with the merchant category's 10-minute average across all cards (97% of spikes caught, 0.05% false alerts; velocity_rule.md section 6)
+- [x] Query 5 (amount anomaly) now compares with the merchant category's 10-minute average across all cards (97% of spikes caught, 0.07% false alerts; velocity_rule.md section 6)
 - [x] Pre-aggregate query 5's category average (WITH CategoryAvg, one joined row per payment instead of ~876)
 - [ ] After deploying, confirm the job accepts the WITH step at the top of asa/query.sql and check SU % utilisation
 - [ ] Upload the new card_metadata.json to Blob Storage and restart the ASA job
@@ -113,6 +113,13 @@
 - [x] Stream Analytics job as code (infra/streamanalytics.bicep) and one-command deploy script (infra/deploy.ps1) - not yet validated: Azure CLI/Bicep not installed on this machine
 - [x] Power BI export from the local warehouse (CSV + Power Query) so the report can be built before Azure is live
 - [ ] Build the Power BI report from powerbi/local_data (Analytics > Export for Power BI), then switch the source to Cosmos DB
+- [x] Query page: drag-and-drop builder and SQL editor, switchable at any time; Library (examples, saved, history); table/chart results; CSV/JSON export
+- [x] Warehouse page: column sort, field filter, full-tab CSV/JSON export, Open in Query, Data model view (lineage, relationships, field profiles)
+- [x] Builder: automatic joins, calculated columns, AND/OR filters, in list / between / like, custom GROUP BY, HAVING, Distinct, Offset
+- [x] SQL editor: syntax highlighting, alias-aware autocomplete, Format; any single SELECT opens in the builder
+- [x] Save any query (WITH, UNION, sub-queries) as a view the builder can use
+- [x] UI options for everything that needed a terminal: Tools page (studies, cards, diagram, screenshots, todo/log, backups/restore/import), Azure Settings/Deploy/Cost tabs, producer rate, Transform > Write to project files
+- [ ] Install the Azure CLI so the Azure > Deploy buttons can run
 - [x] Capture UI screenshots for the report (fraud-613/screenshots/ui_*.png)
 - [x] Persist everything in SQLite (sessions, event log, settings, UI preferences, run logs) with restart/crash recovery
 - [x] Saved sessions: switch, create, rename, delete, export JSON, back up database

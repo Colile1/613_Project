@@ -57,7 +57,7 @@ def transform_policy(ctx, body):
 
 # POST /api/azure/producer {duration, burst}
 def azure_producer(ctx, body):
-    started = ctx.runner.start("producer", producer_args(body.get("duration", 60), body.get("burst"), body.get("malformed", 0.01)), "simulator")
+    started = ctx.runner.start("producer", producer_args(body.get("duration", 60), body.get("burst"), body.get("malformed", 0.01), body.get("rate", 10)), "simulator")
     return {"ok": started, "error": None if started else "a process is already running"}
 
 

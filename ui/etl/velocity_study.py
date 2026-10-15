@@ -7,6 +7,7 @@
 # Run from the project root:  python -m ui.etl.velocity_study
 
 import tempfile
+from datetime import datetime, timezone
 from pathlib import Path
 from statistics import mean
 
@@ -16,6 +17,7 @@ from ui.storage.db import Database
 
 OUT = Path(__file__).resolve().parents[2] / "docs" / "decisions" / "velocity_study_results.md"
 SEEDS = [11, 42, 99]
+START = datetime(2026, 1, 1, tzinfo=timezone.utc)
 ALL_CARDS = list(generator.CARDS)
 
 # (option, label, cards, events/s, simulated seconds, window s, threshold)
@@ -36,6 +38,7 @@ def run(cards, rate, seconds, window_s, rule, seed, folder):
         s = PipelineSession(db)
         s.update("config", {"rate": rate})
         s.reset(seed)
+        s.clock = START   # fixed start: window boundaries line up the same way every run
         s.advance(seconds)
         events, _ = s.result()
         valid = [e for e in events if transform.is_valid(e)]
