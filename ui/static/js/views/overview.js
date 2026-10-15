@@ -18,7 +18,7 @@ const RUBRIC = [
   ['Data generation, realism & schema', 'Extract › Live feed, Event schema, Reference data'],
   ['Ingestion & Event Hubs design', 'Ingest › partitions, throughput, arrival lag'],
   ['Stream processing design & correctness', 'Transform › time policy, 6 query steps'],
-  ['Storage & Cosmos DB modelling', 'Warehouse › 3 containers, 6 sub-tabs'],
+  ['Storage & Cosmos DB modelling', 'Warehouse › 3 containers, 6 sub-tabs, Data model; Query › SQL or drag & drop'],
   ['Power BI analytics & actionable insight', 'Analytics › Live ops, Fraud trends, Health, Card detail'],
   ['Observability, performance & cost', 'Analytics › Pipeline health, Azure › cost estimator'],
   ['Advanced features', 'Local ASA mirror, fraud injection, live Cosmos reader'],

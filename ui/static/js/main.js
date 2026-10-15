@@ -10,6 +10,7 @@ import extract from './views/extract.js';
 import ingest from './views/ingest.js';
 import transform from './views/transform.js';
 import warehouse from './views/warehouse.js';
+import query from './views/query.js';
 import analytics from './views/analytics.js';
 import azure from './views/azure.js';
 import docs from './views/docs.js';
@@ -22,6 +23,7 @@ const NAV = [
   { key: 'ingest', label: 'Ingest', icon: 'move_to_inbox', step: 2, view: ingest },
   { key: 'transform', label: 'Transform', icon: 'transform', step: 3, view: transform },
   { key: 'warehouse', label: 'Warehouse', icon: 'database', step: 4, view: warehouse },
+  { key: 'query', label: 'Query', icon: 'manage_search', view: query },
   { key: 'analytics', label: 'Analytics', icon: 'monitoring', step: 5, view: analytics },
   'divider',
   { key: 'azure', label: 'Azure', icon: 'cloud', view: azure },

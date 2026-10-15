@@ -7,7 +7,7 @@ from http.server import BaseHTTPRequestHandler
 from pathlib import Path
 from urllib.parse import urlparse, parse_qsl
 
-from ui.server import api_read, api_write, api_sessions
+from ui.server import api_read, api_write, api_sessions, api_query, api_reference
 
 STATIC = Path(__file__).resolve().parents[1] / "static"
 DIAGRAMS = {"/diagram/architecture.svg": Path(__file__).resolve().parents[2] / "docs" / "diagrams" / "architecture.svg"}
@@ -15,11 +15,13 @@ DIAGRAMS = {"/diagram/architecture.svg": Path(__file__).resolve().parents[2] / "
 GET_ROUTES = {
     "/api/status": api_read.status, "/api/extract": api_read.extract,
     "/api/ingest": api_read.ingest_view, "/api/transform": api_read.transform_view,
-    "/api/warehouse": api_read.warehouse_view, "/api/threshold": api_read.threshold_view, "/api/reference": api_read.reference, "/api/analytics": api_read.analytics_view,
+    "/api/warehouse": api_read.warehouse_view, "/api/threshold": api_reference.threshold_view, "/api/reference": api_reference.reference, "/api/analytics": api_read.analytics_view,
     "/api/card": api_read.card, "/api/files": api_read.files, "/api/file": api_read.file,
     "/api/azure": api_read.azure, "/api/cosmos": api_read.cosmos,
     "/api/sessions": api_sessions.sessions, "/api/prefs": api_sessions.prefs,
     "/api/sessions/export": api_sessions.export_session,
+    "/api/sql/schema": api_query.schema, "/api/sql/profile": api_query.profile,
+    "/api/sql/export": api_query.export, "/api/sql/saved": api_query.saved,
 }
 POST_ROUTES = {
     "/api/sim/start": api_write.sim_start, "/api/sim/stop": api_write.sim_stop, "/api/sim/speed": api_write.sim_speed,
@@ -31,6 +33,8 @@ POST_ROUTES = {
     "/api/prefs": api_sessions.save_prefs, "/api/sessions/new": api_sessions.new_session,
     "/api/sessions/switch": api_sessions.switch_session, "/api/sessions/rename": api_sessions.rename_session,
     "/api/sessions/delete": api_sessions.delete_session, "/api/sessions/backup": api_sessions.backup,
+    "/api/sql/query": api_query.run, "/api/sql/save": api_query.save, "/api/sql/delete": api_query.delete,
+    "/api/sql/view": api_query.save_view, "/api/sql/view/delete": api_query.delete_view,
 }
 
 
@@ -54,6 +58,16 @@ def make_handler(ctx):
             self.end_headers()
             self.wfile.write(data)
 
+        # Output logic: writes a generated file as a download.
+        def send_download(self, spec):
+            data = spec["body"].encode("utf-8")
+            self.send_response(200)
+            self.send_header("Content-Type", spec["type"] + "; charset=utf-8")
+            self.send_header("Content-Disposition", 'attachment; filename="%s"' % spec["name"])
+            self.send_header("Content-Length", str(len(data)))
+            self.end_headers()
+            self.wfile.write(data)
+
         # Output logic: writes a static file.
         def send_file(self, path):
             data = path.read_bytes()
@@ -70,7 +84,10 @@ def make_handler(ctx):
             if route is None:
                 return self.send_json({"error": "not found"}, 404)
             try:
-                self.send_json(route(ctx, args(url)))
+                payload = route(ctx, args(url))
+                if isinstance(payload, dict) and "__file__" in payload:
+                    return self.send_download(payload["__file__"])
+                self.send_json(payload)
             except Exception as exc:  # keep the server alive; show the error in the UI
                 self.send_json({"error": "%s: %s" % (type(exc).__name__, exc)}, 500)
 

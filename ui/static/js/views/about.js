@@ -9,7 +9,7 @@ const STACK = [
   ['Storage', 'Azure Cosmos DB (NoSQL)', 'fraud_pipeline: aggregates, fraud_alerts, dead_letter'],
   ['Visualisation', 'Power BI', 'Live operations, Fraud trends + drill-through, Pipeline health'],
   ['Infrastructure', 'Bicep', 'infra/eventhubs.bicep, infra/cosmosdb.bicep'],
-  ['This app', 'Python standard library + plain HTML/CSS/JS', 'Material Design 3 styling, SVG charts, no build step'],
+  ['This app', 'Python standard library + plain HTML/CSS/JS', 'Material Design 3 styling, SVG charts, SQLite persistence, read-only SQL warehouse with a drag-and-drop query builder, no build step'],
 ];
 
 const NOTES = [

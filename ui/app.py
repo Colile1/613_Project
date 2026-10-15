@@ -16,6 +16,8 @@ from ui.etl.session import PipelineSession  # noqa: E402
 from ui.integrations.process_runner import ProcessRunner  # noqa: E402
 from ui.server.http_handler import make_handler  # noqa: E402
 from ui.storage.db import Database, DB_PATH  # noqa: E402
+from ui.storage import saved_queries, saved_views  # noqa: E402
+from ui.sqlwh.engine import SqlWarehouse  # noqa: E402
 
 
 # Input wrapper: reads command-line options.
@@ -38,7 +40,10 @@ def display_start(url, session, db):
 def main():
     options = get_options()
     db = Database(Path(options.db))
-    ctx = SimpleNamespace(db=db, session=PipelineSession(db), runner=ProcessRunner(db), prefs_rev=0)
+    saved_queries.ensure_table(db)
+    saved_views.ensure_table(db)
+    session = PipelineSession(db)
+    ctx = SimpleNamespace(db=db, session=session, runner=ProcessRunner(db), prefs_rev=0, sql=SqlWarehouse(session, db))
     server = ThreadingHTTPServer(("127.0.0.1", options.port), make_handler(ctx))
     url = "http://127.0.0.1:%d/" % options.port
     display_start(url, ctx.session, db)

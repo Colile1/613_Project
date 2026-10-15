@@ -175,3 +175,13 @@
 **Why:** The rolling category self-join compared each payment with about 876 others (about 11 000 comparisons per second at 10 events/s), and every query in the job shares one streaming unit, so a busy query 5 could delay all outputs.
 
 **Impact:** One joined row per payment, with the same detection (97% of spikes at 5 000 cards, 0.05% false alerts). The baseline is up to one minute stale, which made no measurable difference. Still to confirm on Azure: that the job accepts the WITH step at the top, and its SU % utilisation.
+
+---
+
+## [2026-10-15] Query page and Data model
+
+**What was done:** Added `ui/sqlwh/`, which loads the current session's warehouse into a read-only in-memory SQLite database (one table per document shape, plus `events` and `cards`, and views `aggregates` and `fraud_alerts` named after the Cosmos DB containers). Added a **Query** page with two interchangeable modes: a drag-and-drop builder (Table, Columns with aggregates, Filters, Sort, Limit; also usable by click and menus) and an SQL editor. Builder to SQL always works; SQL back to the builder works when the query fits one table with AND-ed filters, and otherwise the page explains why and keeps the SQL. Results show as a sortable table or an automatic chart, export as CSV or JSON, and queries can be saved (stored in the database) or reopened from history and eight examples. The Warehouse page gained column sorting, a field filter, full-tab CSV/JSON export, "Open in Query" and a **Data model** view (lineage diagram, relationships, field profiles).
+
+**Why:** Users needed to see and question the whole warehouse, not only fixed pages. The builder lets non-SQL users ask questions; SQL mode gives full power (joins with the card reference data, window functions); switching between them shows the SQL behind each question.
+
+**Impact:** Queries run in milliseconds and cannot change data (an SQLite authorizer allows only reads; 5-second limit). Tested in the browser: drag-and-drop produced the expected SQL, switching modes kept identical SQL, a JOIN was kept in SQL mode with an explanation, hand-written SQL (with its own aliases) reopened in the builder, and charts and exports worked.

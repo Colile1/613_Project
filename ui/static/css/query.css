@@ -1,0 +1,84 @@
+/* query.css : Query page (schema panel, visual builder, SQL editor, results) and Data model view. */
+th.sortable { cursor: pointer; user-select: none; }
+th.sortable:hover { color: var(--on-surface); }
+th .sort-icon { font-size: 15px; width: 15px; height: 15px; vertical-align: -3px; margin-left: 2px; opacity: .5; }
+th.sorted .sort-icon { opacity: 1; color: var(--primary); }
+.segmented { display: inline-flex; border: 1px solid var(--outline); border-radius: 20px; overflow: hidden; }
+.segmented button { border: none; background: transparent; height: 38px; padding: 0 16px; font: 500 13px var(--font); color: var(--on-surface);
+  cursor: pointer; display: inline-flex; align-items: center; gap: 6px; }
+.segmented button + button { border-left: 1px solid var(--outline); }
+.segmented button.on { background: var(--secondary-container); color: var(--on-secondary-container); }
+.segmented .icon { font-size: 18px; width: 18px; height: 18px; }
+.query-layout { display: grid; grid-template-columns: 290px minmax(0, 1fr); gap: 16px; align-items: start; }
+.schema-panel { position: sticky; top: 0; max-height: calc(100vh - 140px); overflow: auto; padding: 12px; }
+.schema-table { border-radius: 10px; }
+.schema-head { flex: 1; min-width: 0; display: flex; align-items: center; gap: 6px; border: none; background: transparent; padding: 6px 8px;
+  border-radius: 8px; cursor: grab; font: 500 13px var(--font); color: var(--on-surface); text-align: left; }
+.schema-head:hover { background: var(--surface-3); }
+.schema-head .icon { font-size: 18px; width: 18px; height: 18px; }
+.schema-head .name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.schema-table .meta { margin-left: auto; padding-left: 8px; font-size: 11px; color: var(--muted); font-weight: 400; font-variant-numeric: tabular-nums; }
+.schema-cols { padding: 2px 0 6px 26px; display: flex; flex-direction: column; gap: 2px; }
+.schema-col { display: flex; align-items: center; gap: 6px; padding: 3px 8px; border-radius: 6px; font: 12.5px var(--mono); cursor: grab;
+  border: 1px solid transparent; background: transparent; color: var(--on-surface); text-align: left; width: 100%; }
+.schema-col:hover { background: var(--surface-2); border-color: var(--outline-variant); }
+.type-badge { font: 600 9.5px var(--font); letter-spacing: .3px; padding: 1px 5px; border-radius: 4px; background: var(--surface-3); color: var(--on-surface-variant); margin-left: auto; }
+.zone { border: 1.5px dashed var(--outline); border-radius: 12px; padding: 10px; min-height: 52px; display: flex; flex-wrap: wrap; gap: 8px; align-items: center;
+  transition: background .12s, border-color .12s; }
+.zone.over { border-color: var(--primary); background: var(--primary-container); }
+.zone .hint { color: var(--muted); font-size: 12.5px; }
+.zone-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: 12px 0 6px; }
+.zone-head h4 { display: flex; align-items: center; gap: 6px; }
+.qchip { display: inline-flex; align-items: center; gap: 6px; padding: 4px 6px 4px 10px; border-radius: 8px; background: var(--secondary-container);
+  color: var(--on-secondary-container); font: 12.5px var(--mono); cursor: grab; }
+.qchip select, .qchip input { height: 28px; font-size: 12px; padding: 0 6px; border-radius: 6px; }
+.qchip input { width: 120px; }
+.qchip .x { border: none; background: transparent; cursor: pointer; color: inherit; display: inline-grid; place-items: center; width: 22px; height: 22px; border-radius: 11px; }
+.qchip .x:hover { background: rgba(0,0,0,.1); }
+.qchip .icon { font-size: 16px; width: 16px; height: 16px; }
+.sql-editor { width: 100%; min-height: 220px; resize: vertical; font: 13px/1.6 var(--mono); padding: 12px 14px; border-radius: 12px;
+  border: 1px solid var(--outline); background: var(--surface-1); color: var(--on-surface); tab-size: 2; }
+.sql-editor:focus { outline: 2px solid var(--primary); outline-offset: -1px; }
+.sql-preview { margin-top: 12px; }
+.result-bar { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; justify-content: space-between; margin-bottom: 8px; }
+td.null { color: var(--muted); font-style: italic; }
+.model-svg { width: 100%; height: auto; display: block; }
+.model-svg .node rect { fill: var(--surface-1); stroke: var(--outline); stroke-width: 1.2; }
+.model-svg .node.view rect { fill: var(--primary-container); stroke: var(--primary); }
+.model-svg .node.src rect { fill: var(--surface-2); }
+.model-svg .node { cursor: pointer; }
+.model-svg .node:hover rect { stroke: var(--primary); stroke-width: 2; }
+.model-svg text { fill: var(--on-surface); font-family: var(--font); }
+.model-svg .sub { fill: var(--on-surface-variant); font-size: 11px; }
+.model-svg .edge { fill: none; stroke: var(--outline); stroke-width: 1.4; }
+.model-svg .edge.ref { stroke-dasharray: 4 4; stroke: var(--s2); }
+.model-svg .lane { fill: var(--muted); font-size: 11px; font-weight: 600; letter-spacing: .5px; }
+@media (max-width: 900px) {
+  .query-layout { grid-template-columns: minmax(0, 1fr); }
+  .schema-panel { position: static; max-height: 320px; }
+}
+/* SQL editor: highlighted <pre> under a transparent <textarea> (identical box metrics). */
+.sql-wrap { position: relative; }
+.sql-wrap .sql-editor, .sql-wrap .sql-hl { font: 13px/1.6 var(--mono); padding: 12px 14px; border: 1px solid transparent; border-radius: 12px;
+  white-space: pre-wrap; overflow-wrap: break-word; word-break: normal; tab-size: 2; letter-spacing: 0; margin: 0; }
+.sql-wrap .sql-hl { position: absolute; inset: 0; overflow: hidden; pointer-events: none; color: var(--on-surface); background: var(--surface-1);
+  border-color: var(--outline); }
+.sql-wrap .sql-editor { position: relative; display: block; background: transparent; color: transparent; caret-color: var(--on-surface); }
+.sql-wrap .sql-editor::selection { background: rgba(42,120,214,.28); color: transparent; }
+.sql-wrap .sql-editor::placeholder { color: var(--muted); }
+.sql-hl .kw { color: var(--primary); font-weight: 600; }
+.sql-hl .fn { color: var(--s2); }
+.sql-hl .str { color: var(--s3); }
+.sql-hl .num { color: #b07a00; }
+.sql-hl .cmt { color: var(--muted); font-style: italic; }
+.sql-hl .tbl { font-weight: 600; text-decoration: underline dotted var(--outline); }
+.sql-hl .col { color: var(--on-surface-variant); }
+.ac-pop { position: absolute; z-index: 5; min-width: 220px; max-width: 320px; background: var(--surface-1); border: 1px solid var(--outline-variant);
+  border-radius: 10px; box-shadow: 0 6px 18px rgba(0,0,0,.18); padding: 4px; }
+.ac-item { display: flex; justify-content: space-between; gap: 12px; padding: 5px 8px; border-radius: 6px; font: 12.5px var(--mono); cursor: pointer; }
+.ac-item.on, .ac-item:hover { background: var(--secondary-container); color: var(--on-secondary-container); }
+.ac-kind { font: 11px var(--font); color: var(--muted); }
+.qchip input.mono { font: 12px var(--mono); }
+.join-chip { flex-wrap: wrap; }
+.small-seg button { height: 30px; padding: 0 10px; font-size: 12px; }
+.editor-tools { display: flex; gap: 8px; justify-content: flex-end; margin-bottom: 8px; flex-wrap: wrap; }

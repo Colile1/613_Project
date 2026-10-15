@@ -10,7 +10,7 @@ RELATIONSHIPS = [
     ("card_windows.card_id", "cards.card_id", "query 2 groups by card"),
     ("velocity_alerts.card_id", "cards.card_id", "query 4 alerts per card"),
     ("high_amount_alerts.transaction_id", "transactions.transaction_id", "query 5 flags one payment"),
-    ("high_amount_alerts.merchant_category", "category_trends.merchant_category", "query 5 baseline is the category"),
+    ("high_amount_alerts.merchant_category", "transactions.merchant_category", "query 5 compares with the category's 10-minute average (step 0)"),
     ("dead_letter.transaction_id", "events.transaction_id", "query 1 routes invalid events (id may be missing)"),
 ]
 
@@ -27,13 +27,16 @@ EXAMPLES = [
 
 
 # Schema for the Query page and the Data model view.
-def schema(conn, types):
-    out = []
+def schema(conn, types, custom=None):
+    custom, out = custom or {}, []
     for name, cols in types.items():
-        is_view = name in VIEWS
-        desc, where = (VIEWS[name][0], "Cosmos \u00b7 " + name) if is_view else TABLES[name]
+        is_view = name in VIEWS or name in custom
+        if name in custom:
+            desc, where = "Saved view: " + " ".join(custom[name].split())[:140], "Saved view (yours)"
+        else:
+            desc, where = (VIEWS[name][0], "Cosmos \u00b7 " + name) if name in VIEWS else TABLES[name]
         rows = conn.execute(f'SELECT COUNT(*) FROM "{name}"').fetchone()[0]
-        out.append({"name": name, "kind": "view" if is_view else "table", "description": desc, "location": where,
+        out.append({"name": name, "kind": "saved view" if name in custom else "view" if is_view else "table", "description": desc, "location": where,
                     "rows": rows, "columns": [{"name": c, "type": t} for c, t in cols.items()]})
     return {"tables": out, "relationships": [{"from": a, "to": b, "label": l} for a, b, l in RELATIONSHIPS],
             "examples": [{"name": n, "sql": s} for n, s in EXAMPLES]}

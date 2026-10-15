@@ -1,8 +1,10 @@
 // warehouse.js : Step 4 - the Cosmos DB warehouse. Three containers, six document sub-tabs,
-// search, paging, JSON export, and an optional live view of the real Azure containers.
+// search, field filter, column sort, paging, full CSV/JSON export, Open in Query, a Data model
+// view, and an optional live view of the real Azure containers.
 import { h, icon, clear, num, zar, time, card, pageHead, tabs, table, jsonDialog, download, callout, chip, code } from '../ui.js';
 import { get } from '../api.js';
 import { pref, setPref } from '../prefs.js';
+import { renderModel } from './model.js';
 
 const COLS = {
   card_windows: [['card_id', 'Card'], ['window_start', 'Start', time], ['window_end', 'End', time], ['tx_count', 'Tx', null, 1], ['total_amount_zar', 'Total', zar, 1], ['avg_amount_zar', 'Average', zar, 1], ['max_amount_zar', 'Max', zar, 1], ['distinct_merchants', 'Merchants', null, 1]],
@@ -13,7 +15,8 @@ const COLS = {
   dead_letter: [['ingestion_date', 'Date (partition)'], ['ingestion_time', 'Time', time], ['dead_letter_detail', 'Reason', (v) => chip(v, 'bad', 'report')], ['card_id', 'Card'], ['amount', 'Amount', (v) => (v === null ? '-' : zar(v)), 1], ['transaction_id', 'Transaction']],
 };
 const CONTAINER_ICON = { aggregates: 'stacked_bar_chart', fraud_alerts: 'crisis_alert', dead_letter: 'report' };
-let refs = {}, st = { collection: 'card_windows', q: '', offset: 0, source: 'local' }, last = null;
+const SQL_TABLE = { card_windows: 'card_windows', category_trends: 'category_trends', enriched: 'transactions', velocity: 'velocity_alerts', high_amount: 'high_amount_alerts', dead_letter: 'dead_letter' };
+let refs = {}, st = { collection: 'card_windows', q: '', offset: 0, source: 'local', sort: null, dir: 'desc', field: '', value: '', mode: 'documents' }, last = null, goTo = null;
 
 function containers(d) {
   return h('div', { class: 'grid g3' }, Object.entries(d.containers).map(([name, meta]) => {
@@ -27,8 +30,26 @@ function containers(d) {
   }));
 }
 
-function select(key) { st.collection = key; st.offset = 0; remember(); render(); }
-function remember() { setPref('warehouse', { collection: st.collection, q: st.q, source: st.source }); }
+function select(key) { Object.assign(st, { collection: key, offset: 0, sort: null, field: '', value: '' }); remember(); render(); }
+function remember() { setPref('warehouse', { collection: st.collection, q: st.q, source: st.source, sort: st.sort, dir: st.dir, field: st.field, value: st.value, mode: st.mode }); }
+
+function openInQuery() {
+  const filters = st.field && st.value ? [{ field: st.field, op: '=', value: st.value }] : [];
+  const sorts = st.sort ? [{ field: st.sort, agg: '', dir: st.dir }] : [];
+  setPref('query.state', { mode: 'builder', sql: '', builder: { table: SQL_TABLE[st.collection], columns: [], filters, sorts, limit: 100 } });
+  setPref('query.autorun', true);
+  goTo('query');
+}
+
+function fieldFilter(fields) {
+  const value = h('input', { type: 'text', placeholder: 'equals...', value: st.value, style: { width: '160px' }, 'aria-label': 'Field value',
+    oninput: (e) => { st.value = e.target.value; st.offset = 0; remember(); clearTimeout(refs.t); refs.t = setTimeout(render, 300); } });
+  return h('div', { class: 'row' },
+    h('select', { 'aria-label': 'Filter field', onchange: (e) => { st.field = e.target.value; st.offset = 0; remember(); render(); } },
+      h('option', { value: '' }, 'Filter on a field...'), fields.map((f) => h('option', { value: f, selected: f === st.field }, f))),
+    st.field ? value : null,
+    st.field ? h('button', { class: 'icon-btn', title: 'Clear filter', onclick: () => { st.field = ''; st.value = ''; remember(); render(); } }, icon('close')) : null);
+}
 
 function columns(key) {
   return COLS[key].map(([k, label, fmt, isNum]) => ({ key: k, label, fmt: fmt || ((v) => (typeof v === 'number' ? num(v) : v)), num: !!isNum }));
@@ -36,19 +57,27 @@ function columns(key) {
 
 async function render() {
   if (st.source === 'azure') return renderAzure();
-  const d = await get('/api/warehouse', { collection: st.collection, q: st.q, limit: 100, offset: st.offset });
+  const d = await get('/api/warehouse', { collection: st.collection, q: st.q, limit: 100, offset: st.offset, sort: st.sort, dir: st.dir, field: st.field, value: st.field ? st.value : '' });
   last = d;
   clear(refs.containers, containers(d));
   clear(refs.tabs, tabs(d.collections.map((c) => ({ key: c.key, label: c.label, count: d.per_collection[c.key] })), st.collection, select));
   const info = d.collections.find((c) => c.key === st.collection);
   const pages = Math.max(1, Math.ceil(d.total / 100)), page = Math.floor(st.offset / 100) + 1;
+  const table_ = SQL_TABLE[st.collection];
+  clear(refs.filter, fieldFilter(d.fields || []),
+    h('div', { class: 'row' },
+      h('a', { class: 'btn tonal sm', href: `/api/sql/export?table=${table_}&format=csv`, title: 'Every document in this tab, as CSV' }, icon('download'), 'CSV (all)'),
+      h('a', { class: 'btn tonal sm', href: `/api/sql/export?table=${table_}&format=json`, title: 'Every document in this tab, as JSON' }, icon('data_object'), 'JSON (all)'),
+      h('button', { class: 'btn sm', onclick: openInQuery, title: 'Query this tab with the builder or SQL' }, icon('manage_search'), 'Open in Query')));
   clear(refs.meta, h('div', { class: 'row between' },
-    h('span', { class: 'muted small' }, `Container ${info.container} \u00b7 written by query ${info.step} \u00b7 ${num(d.total)} matching documents \u00b7 newest first \u00b7 click a row for the JSON document`),
+    h('span', { class: 'muted small' }, `Container ${info.container} \u00b7 written by query ${info.step} \u00b7 SQL table ${table_} \u00b7 ${num(d.total)} matching documents \u00b7 ${st.sort ? 'sorted by ' + st.sort + ' ' + st.dir : 'newest first'} \u00b7 click a header to sort, a row for its JSON`),
     h('div', { class: 'row' },
       h('button', { class: 'icon-btn', title: 'Previous page', disabled: page <= 1, onclick: () => { st.offset -= 100; render(); } }, icon('chevron_left')),
       h('span', { class: 'small' }, `Page ${page} of ${pages}`),
       h('button', { class: 'icon-btn', title: 'Next page', disabled: page >= pages, onclick: () => { st.offset += 100; render(); } }, icon('chevron_right')))));
-  clear(refs.table, table(columns(st.collection), d.rows, { onRow: (r) => jsonDialog(r.id, r), empty: 'No documents yet. Windows and alerts appear once the watermark passes them - generate a few simulated minutes.' }));
+  clear(refs.table, table(columns(st.collection), d.rows, { onRow: (r) => jsonDialog(r.id, r),
+    sort: { key: st.sort, dir: st.dir, onSort: (k) => { st.dir = st.sort === k && st.dir === 'desc' ? 'asc' : 'desc'; st.sort = k; st.offset = 0; remember(); render(); } },
+    empty: st.field || st.q ? 'No documents match the search or filter.' : 'No documents yet. Windows and alerts appear once the watermark passes them - generate a few simulated minutes.' }));
 }
 
 async function renderAzure() {
@@ -58,6 +87,7 @@ async function renderAzure() {
     (k) => { st.collection = Object.keys(map).find((x) => map[x] === k); renderAzure(); }));
   clear(refs.meta, h('span', { class: 'muted small' }, 'Reading the newest 100 documents from Azure Cosmos DB (fraud_pipeline / ' + container + ')...'));
   clear(refs.table);
+  clear(refs.filter);
   const d = await get('/api/cosmos', { container, limit: 100 });
   if (d.error) return clear(refs.table, callout('cloud_off', [h('b', {}, 'Live Cosmos DB is not available. '), d.error, '. The local warehouse keeps working - switch the source back to Local.'], 'warn'));
   last = { rows: d.rows, collection: container };
@@ -69,20 +99,35 @@ async function renderAzure() {
 export default {
   async mount(root, ctx) {
     st = { ...st, ...pref('warehouse', {}), offset: 0 };
-    if (ctx.sub && COLS[ctx.sub]) st.collection = ctx.sub;
-    refs = { containers: h('div'), tabs: h('div'), meta: h('div'), table: h('div') };
+    goTo = ctx.go;
+    if (ctx.sub && COLS[ctx.sub]) { st.collection = ctx.sub; st.mode = 'documents'; }
+    if (ctx.sub === 'model') st.mode = 'model';
+    refs = { containers: h('div'), tabs: h('div'), meta: h('div'), table: h('div'), filter: h('div', { class: 'toolbar between', style: { marginBottom: '8px' } }), body: h('div', { class: 'grid' }), model: h('div', { class: 'grid' }) };
     const search = h('input', { type: 'search', class: 'grow', placeholder: 'Search documents (card, category, reason...)', value: st.q, 'aria-label': 'Search documents',
       oninput: (e) => { st.q = e.target.value; st.offset = 0; remember(); clearTimeout(refs.t); refs.t = setTimeout(render, 250); } });
     const source = h('select', { 'aria-label': 'Data source', onchange: (e) => { st.source = e.target.value; remember(); render(); } },
       h('option', { value: 'local', selected: st.source === 'local' }, 'Source: local pipeline'), h('option', { value: 'azure', selected: st.source === 'azure' }, 'Source: Azure Cosmos DB (live)'));
-    root.append(pageHead('Step 4 · Load', 'Cosmos DB data warehouse',
-      'Database fraud_pipeline holds three containers. The aggregates container receives three document shapes, so each output gets its own sub-tab. Partition keys follow the dashboard query paths: /card_id for card analysis, /ingestion_date for the dead-letter audit trail.'),
-      refs.containers,
+    const modeSwitch = h('div', { class: 'segmented', role: 'group', 'aria-label': 'Warehouse view' });
+    const setMode = async (m) => {
+      st.mode = m; remember();
+      clear(modeSwitch,
+        h('button', { class: m === 'documents' ? 'on' : '', onclick: () => setMode('documents') }, icon('description'), 'Documents'),
+        h('button', { class: m === 'model' ? 'on' : '', onclick: () => setMode('model') }, icon('account_tree'), 'Data model'),
+        h('button', { onclick: () => goTo('query') }, icon('manage_search'), 'Query'));
+      refs.body.style.display = m === 'documents' ? '' : 'none';
+      refs.model.style.display = m === 'model' ? '' : 'none';
+      if (m === 'model') await renderModel(refs.model, goTo); else await render();
+    };
+    refs.body.append(refs.containers,
       h('section', { class: 'card' }, refs.tabs,
         h('div', { class: 'toolbar', style: { margin: '16px 0 8px' } }, search, source,
-          h('button', { class: 'btn tonal', onclick: () => last && download(st.collection + '.json', last.rows) }, icon('download'), 'Export page')),
-        refs.meta, h('div', { style: { marginTop: '8px' } }, refs.table)));
-    await render();
+          h('button', { class: 'btn text', onclick: () => last && download(st.collection + '-page.json', last.rows), title: 'Only the rows on this page' }, icon('download'), 'This page')),
+        refs.filter, refs.meta, h('div', { style: { marginTop: '8px' } }, refs.table)));
+    root.append(pageHead('Step 4 \u00b7 Load', 'Cosmos DB data warehouse',
+      'Database fraud_pipeline holds three containers. The aggregates container receives three document shapes, so each output gets its own sub-tab. Partition keys follow the dashboard query paths: /card_id for card analysis, /ingestion_date for the dead-letter audit trail.',
+      [modeSwitch]),
+      refs.body, refs.model);
+    await setMode(st.mode || 'documents');
   },
-  async update() { if (st.source === 'local' && st.offset === 0) await render(); },
+  async update() { if (st.mode !== 'model' && st.source === 'local' && st.offset === 0) await render(); },
 };

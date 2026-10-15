@@ -67,12 +67,19 @@ def time_key(doc):
 
 
 # Pure function: filters, sorts newest-first and pages one collection.
-def query_collection(docs, text="", field=None, value=None, limit=200, offset=0):
+def query_collection(docs, text="", field=None, value=None, limit=200, offset=0, sort=None, desc=True):
     rows = docs
     if field and value:
         rows = [d for d in rows if str(d.get(field)) == value]
     if text:
         needle = text.lower()
         rows = [d for d in rows if needle in " ".join(str(v) for v in d.values()).lower()]
-    rows = sorted(rows, key=time_key, reverse=True)
-    return {"total": len(rows), "rows": rows[offset:offset + limit]}
+    if sort:
+        present = [d for d in rows if d.get(sort) is not None]
+        rows = sorted(present, key=lambda d: d[sort], reverse=desc) + [d for d in rows if d.get(sort) is None]
+    else:
+        rows = sorted(rows, key=time_key, reverse=True)
+    fields = []
+    for d in docs[:200]:
+        fields += [k for k in d if k not in fields]
+    return {"total": len(rows), "rows": rows[offset:offset + limit], "fields": fields}

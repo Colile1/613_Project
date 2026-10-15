@@ -2,7 +2,7 @@
 # Each function takes the shared context and the query parameters and
 # returns a JSON-serialisable dict. No printing, no HTTP details.
 
-from ui.etl import ingest, warehouse, analytics, threshold, transform
+from ui.etl import ingest, warehouse, analytics
 from ui.etl.generator import iso
 from ui.integrations import project_files, env_status, cosmos_live
 
@@ -44,21 +44,6 @@ def extract(ctx, q):
             "cards": len(ctx.session.metadata)}
 
 
-# GET /api/reference?q=&offset=&limit=  (or ?ids=1 for every card id)
-def reference(ctx, q):
-    rows = list(ctx.session.metadata.values())
-    if q.get("ids"):
-        return {"ids": [r["card_id"] for r in rows]}
-    tiers = {}
-    for r in rows:
-        tiers[r["customer_tier"]] = tiers.get(r["customer_tier"], 0) + 1
-    needle = q.get("q", "").lower()
-    if needle:
-        rows = [r for r in rows if needle in " ".join(str(v) for v in r.values()).lower()]
-    offset, limit = int(q.get("offset", 0)), int(q.get("limit", 100))
-    return {"total": len(rows), "cards": len(ctx.session.metadata), "tiers": tiers, "rows": rows[offset:offset + limit]}
-
-
 # GET /api/ingest
 def ingest_view(ctx, q):
     events, _ = ctx.session.result()
@@ -77,24 +62,14 @@ def transform_view(ctx, q):
                         "threshold": policy["velocity_threshold"]}}
 
 
-# GET /api/threshold - velocity threshold sweep over the session's valid events
-def threshold_view(ctx, q):
-    events, result = ctx.session.result()
-    valid = [e for e in events if transform.is_valid(e)]
-    data = threshold.sweep(valid)
-    data["current"] = {"threshold": ctx.session.policy["velocity_threshold"], "window_s": ctx.session.policy["velocity_window_s"]}
-    data["rate"] = ctx.session.config["rate"]
-    data["cards"] = len(ctx.session.metadata)
-    return data
-
-
 # GET /api/warehouse
 def warehouse_view(ctx, q):
     events, result = ctx.session.result()
     key = q.get("collection", "card_windows")
     docs = result["collections"].get(key, [])
     page = warehouse.query_collection(docs, q.get("q", ""), q.get("field"), q.get("value"),
-                                      int(q.get("limit", 100)), int(q.get("offset", 0)))
+                                      int(q.get("limit", 100)), int(q.get("offset", 0)),
+                                      q.get("sort"), q.get("dir", "desc") != "asc")
     per_collection, per_container = warehouse.counts(result)
     return {"containers": warehouse.CONTAINERS, "per_container": per_container, "per_collection": per_collection,
             "collections": [{"key": k, "container": c, "label": l, "step": s} for k, c, l, s in warehouse.COLLECTIONS],

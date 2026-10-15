@@ -67,7 +67,14 @@ export function tabs(items, active, onSelect) {
 
 export function table(columns, rows, opts = {}) {
   if (!rows.length) return h('div', { class: 'empty' }, opts.empty || 'No rows yet. Generate some traffic first.');
-  const head = h('tr', {}, columns.map((c) => h('th', { class: c.num ? 'num' : '' }, c.label)));
+  const sort = opts.sort;
+  const head = h('tr', {}, columns.map((c) => {
+    if (!sort || c.sortable === false) return h('th', { class: c.num ? 'num' : '' }, c.label);
+    const active = sort.key === c.key;
+    return h('th', { class: (c.num ? 'num ' : '') + 'sortable' + (active ? ' sorted' : ''), tabindex: 0, 'aria-sort': active ? (sort.dir === 'asc' ? 'ascending' : 'descending') : 'none',
+      onclick: () => sort.onSort(c.key), onkeydown: (e) => { if (e.key === 'Enter') sort.onSort(c.key); } },
+      c.label, h('span', { class: 'icon sort-icon' }, active ? (sort.dir === 'asc' ? 'arrow_upward' : 'arrow_downward') : 'unfold_more'));
+  }));
   const body = rows.map((r) => h('tr', {
     class: [opts.onRow ? 'click' : '', opts.rowClass ? opts.rowClass(r) : ''].join(' '),
     onclick: opts.onRow ? () => opts.onRow(r) : null },

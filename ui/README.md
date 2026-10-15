@@ -32,7 +32,8 @@ stored in `ui/data/control_centre.db` as they change, and restored on the next s
 | `etl/` | Local pipeline engine (generator, ingest, transform, alerts, enrich, warehouse, analytics, session) |
 | `server/` | HTTP server and JSON API (`api_read.py` GET routes, `api_write.py` POST routes) |
 | `integrations/` | Project file access, environment checks, producer runner, live Cosmos DB reader |
-| `storage/` | SQLite persistence: sessions, raw event log, UI preferences, run logs (see `storage/README.md`) |
+| `storage/` | SQLite persistence: sessions, raw event log, UI preferences, run logs, saved queries (see `storage/README.md`) |
+| `sqlwh/` | The warehouse as a read-only SQL database for the Query page, Data model and exports (see `sqlwh/README.md`) |
 | `static/` | The single-page interface: `index.html`, `css/`, `js/` (one module per page in `js/views/`) |
 
 The server listens on 127.0.0.1 only. Only whitelisted project files can be read, and `simulator/.env` secrets never reach the browser.
